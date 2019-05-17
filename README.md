@@ -1,4 +1,6 @@
 # ASCII-Images
-Having fun with images and ASCII characters
+Experimenting with images and ASCII characters
 
-Original program takes JPEG image as input and returns a .txt document with an ASCII representation of the image
+Original program (ascii.py) takes JPEG image as input and returns a .txt document with an ASCII representation of the image
+
+webcam_ascii.py streams video directly from a webcam. It uses a combination of opencv and tkinter to take the stream frame by frame, convert it to ASCII characters and output it to an interface.
