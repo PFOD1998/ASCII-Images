@@ -8,7 +8,9 @@ Created on Thu May 16 14:09:56 2019
 import cv2
 from tkinter import *
 import numpy as np
+import time
 
+    
 def brightness(r,g,b):
     """
     Takes R,G,B value and converts it to a brightness value
@@ -19,9 +21,13 @@ def getChar(brightness):
     """
     Takes in a brightness value and returns it's corresponding ASCII character
     """
+
     # Map of chars based off brightness
     chars = "`^\",:;Il!i~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
-    thisChar = chars[int(brightness//3.95)] # 64 -
+    if gui.inverted:
+        thisChar = chars[64 - int(brightness//3.95)]
+    else:
+        thisChar = chars[int(brightness//3.95)]
     return thisChar
 
 def onStart():
@@ -48,11 +54,76 @@ def onStart():
             char = getChar(brightness(r,g,b))
             result += char*2
         result += "\n"
-    final = result
+    gui.final = result
     # Update the text in the interface
-    label["text"] = result
-    # Call for the next frame
-    root.after(30, onStart)
+    gui.ascii["text"] = result
+    
+    if not gui.paused:
+        # Call for the next frame
+        root.after(30, onStart)
+    
+class myGUI():
+    def __init__(self, root):
+        self.root = root
+        self.root.state("zoomed")
+        #root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth()-50, root.winfo_screenheight()-50))
+        
+        # Toggle variables
+        self.inverted = False
+        self.paused = False
+        self.final = ""
+        
+        # Frames
+        self.images = Frame(self.root).pack(side=TOP)
+        self.controls = Frame(self.root).pack(side=BOTTOM)
+        
+        self.ascii = Label(self.images, text="")
+        # Small font needed for displaying characters as image
+        self.ascii.config(font=("Courier", 2), foreground="white")
+        self.root.configure(background="gray")
+        self.ascii.config(background="black")
+        self.ascii.pack()
+        #self.ascii.place(x=10,y=10,anchor="nw")
+        
+        #control buttons
+        self.pauseText = StringVar()
+        self.pauseButton = Button(self.controls, textvariable=self.pauseText, command=self.togglePause).pack()
+        self.pauseText.set("Pause")
+        self.saveButton = Button(self.controls, text="Save", command=self.saveFile).pack()
+        self.invertButton = Button(self.controls, text="Invert", command=self.invert).pack()
+        
+    def invert(self):
+        """
+        Changes inverted variable so bright areas dark/dark areas bright
+        """
+        if self.inverted:
+            self.inverted = False
+            return
+        self.inverted = True
+        return
+    
+    def togglePause(self):
+        """
+        Pauses image stream or unpauses image stream
+        """
+        if self.paused:
+            self.paused = False
+            onStart()
+            self.pauseText.set("Pause")
+            return
+        self.paused = True
+        self.pauseText.set("Unpause")
+        return
+    
+    def saveFile(self):
+        """
+        Saves current ASCII string into a file
+        file saved in current directory with time stamp filename
+        """
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        file = open(timestr + ".txt","w")
+        file.write(self.final)
+        file.close()
     
     
 # Set up connection to the webcam
@@ -60,11 +131,7 @@ cap = cv2.VideoCapture(0)
 
 # Set up the interface
 root = Tk()
-root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth()-50, root.winfo_screenheight()-50))
-label = Label(root, text="")
-# Small font needed for displaying characters as image
-label.config(font=("Courier", 2))
-label.place(x=10,y=10,anchor="nw")
+gui = myGUI(root)
 
 # Call function to start the webcam to ascii stream
 onStart()
